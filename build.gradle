@@ -1,0 +1,29 @@
+apply plugin: 'groovy'
+apply plugin: 'eclipse'
+
+task createWrapper(type:Wrapper) {
+    gradleVersion = '1.0'
+}
+
+defaultTasks 'clean', 'test', 'assemble'
+
+sourceCompatibility = 1.6
+targetCompatibility = 1.6
+
+compileJava.options.fork([memoryMaximumSize: '1024m'])
+
+group = 'org.climatic'
+
+repositories {
+    mavenCentral()
+    maven {
+      url "http://oss.sonatype.org/content/repositories/snapshots/"
+    }
+}
+
+dependencies {
+    groovy 'org.codehaus.groovy:groovy-all:2.0.5'
+    runtime 'commons-cli:commons-cli:1.2'
+    testCompile 'junit:junit:4.7',
+                'org.spockframework:spock-core:1.0-groovy-2.0-SNAPSHOT'
+}
