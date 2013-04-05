@@ -160,10 +160,8 @@ public class TaskApp {
         }
       }
     }
-    println 'Task graph execution beginning ...'
     def tasks = task.getDependencies(tasks)
     runTasks(tasks, config, argz)
-    println 'Task graph execution completed.'
     task
   }
 
