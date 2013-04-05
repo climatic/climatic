@@ -138,7 +138,7 @@ public class TaskApp {
 
   private static class Help extends RuntimeException {}
 
-  def help() {
+  public void help() {
     throw new Help()
   }
 
@@ -175,6 +175,7 @@ public class TaskApp {
     def options = cli.parse(args)
     try {
       task.cliHandle.each { cliHandler ->
+        cliHandler.delegate = this
         cliHandler(options, config)
       }
       } catch (Help h) {
