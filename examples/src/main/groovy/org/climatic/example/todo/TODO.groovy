@@ -13,7 +13,7 @@ public class TODO {
 
       configureCliBuilder { cliBuilder ->
         cliBuilder.with {
-          setUsage 'T O D O'
+          setUsage 'todo [options] task'
           h longOpt: 'help', 'usage information'
           t longOpt: 'todo-home', args: 1, argName: 'dir', 'TODO dir'
         }

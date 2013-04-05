@@ -190,11 +190,21 @@ public class TaskApp {
         cliHandler(options, config)
       }
     } catch (Help h) {
-      cli.usage()
-      throw new TerminateTaskApp()
+      taskHelp(task, cli)
     }
     config[task.qualifiedName].cli = cli
     [options.arguments(), config]
+  }
+
+  private void taskHelp(task, cli) {
+    def header = 'tasks:\n' << ''
+    task.subTasks.each {
+      header << "    $it.name\n"
+    }
+    header << '\noptions:'
+    cli.setHeader header.toString()
+    cli.usage()
+    throw new TerminateTaskApp()
   }
 
   private void runTasks(tasks, config, argz) {
@@ -212,8 +222,7 @@ public class TaskApp {
           it(task, config, argz)
         }
       } catch (Help h) {
-        config[task.qualifiedName].cli.usage()
-        throw new TerminateTaskApp()
+        taskHelp(task, config[task.qualifiedName].cli)
       }
     }
   }
