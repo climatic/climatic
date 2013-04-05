@@ -5,22 +5,22 @@ public class TaskApp {
   private final tasks = [:]
 
   private final beforeTasks = []
-    
+
   private static class TaskGraphBuilder {
-    
+
     private final tasks
-      
+
     private currentTask
-    
+
     public TaskGraphBuilder(tasks) {
       this.tasks = tasks
     }
-    
+
     public void configure(Closure... taskConfigurations) {
       task(null, taskConfigurations)
     }
-    
-    Task task(String name, Closure... taskConfigurations) {
+
+    public Task task(String name, Closure... taskConfigurations) {
         Task task = resolveTaskFromName(name)
         if (taskConfigurations) {
           def parentTask = currentTask
@@ -33,9 +33,9 @@ public class TaskApp {
         }
         task
     }
-  
+
     private resolveTaskFromName(name) {
-      def task     
+      def task
       if (currentTask) {
         task = currentTask.createTask(name)
       } else {
@@ -44,27 +44,31 @@ public class TaskApp {
       tasks[task.qualifiedName] = task
       task
     }
-    
+
     private getRootTask() {
       tasks[':']
     }
 
-    public void dependsOn(String... tasks) {
+    public Task dependsOn(String... tasks) {
       currentTask.dependsOn.addAll tasks
+      currentTask
     }
 
-    public void configureCli(cli) {
+    public Task configureCliBuilder(cli) {
       currentTask.cliConfig << cli
+      currentTask
     }
 
-    public void handleCli(cli) {
+    public Task handleOptions(cli) {
       currentTask.cliHandle << cli
+      currentTask
     }
 
-    public void onExecute(job) {
+    public Task onExecute(job) {
       currentTask.runners << job
-    }  
-    
+      currentTask
+    }
+
   }
 
   private static class Task {
@@ -81,7 +85,7 @@ public class TaskApp {
       this.name = name
       this.qualifiedName = qualifiedName
     }
-    
+
     static Task createRootTask() {
       new Task(':', ':')
     }
@@ -126,23 +130,33 @@ public class TaskApp {
 
   }
 
-  TaskApp configure(Closure... taskConfigurations) {
+  public TaskApp configure(Closure... taskConfigurations) {
     new TaskGraphBuilder(tasks).configure(taskConfigurations)
     this
   }
 
-  TaskApp onTaskBegin(Closure taskBeginAction) {
+  public TaskApp onTaskBegin(Closure taskBeginAction) {
     beforeTasks << taskBeginAction
     this
   }
 
   private static class Help extends RuntimeException {}
 
+  private static class TerminateTaskApp extends RuntimeException {}
+
   public void help() {
     throw new Help()
   }
 
-  def run(String... args) {
+  public void run(String... args) {
+    try {
+      runUnsafe(args)
+    } catch (TerminateTaskApp t) {
+      //NOP
+    }
+  }
+
+  private void runUnsafe(String... args) {
     def taskName = ':'
     def task = tasks[taskName]
     def (argz, config) = configTask(task, args)
@@ -151,7 +165,7 @@ public class TaskApp {
       def nextTask = tasks[taskName]
       while (nextTask) {
         task = nextTask
-          (argz, config) = configTask(task, argz.tail(), config)
+        (argz, config) = configTask(task, argz.tail(), config)
         if (argz) {
           taskName += ':' + argz.head()
           nextTask = tasks[taskName]
@@ -162,13 +176,12 @@ public class TaskApp {
     }
     def tasks = task.getDependencies(tasks)
     runTasks(tasks, config, argz)
-    task
   }
 
   private configTask(task, args, config = new ConfigObject()) {
     def cli = new CliBuilder()
-    task.cliConfig.each {
-      cli.with it
+    task.cliConfig.each { configCli ->
+      configCli(cli)
     }
     def options = cli.parse(args)
     try {
@@ -178,23 +191,29 @@ public class TaskApp {
       }
     } catch (Help h) {
       cli.usage()
+      throw new TerminateTaskApp()
     }
     config[task.qualifiedName].cli = cli
     [options.arguments(), config]
   }
 
-  private runTasks(tasks, config, argz) {
+  private void runTasks(tasks, config, argz) {
     tasks.each { task ->
       beforeTasks.each {
         it(task, config, argz)
       }
       try {
-        task.runners.each {
+        def taskRunners = task.runners
+        if(!taskRunners) {
+          help()
+        }
+        taskRunners.each {
           it.delegate = this
           it(task, config, argz)
         }
       } catch (Help h) {
         config[task.qualifiedName].cli.usage()
+        throw new TerminateTaskApp()
       }
     }
   }

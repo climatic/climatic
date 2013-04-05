@@ -15,7 +15,7 @@ class TaskAppSpec extends Specification {
           T A S K   A P P
           '''
         h longOpt: 'help', 'usage information'
-        t longOpt: 'test.home', args:1, argName:'dir', 'Test Suite home'
+        t longOpt: 'test.home', args: 1, argName: 'dir', 'Test Suite home'
       }
       handleCli { options, config ->
         if(options.h) {

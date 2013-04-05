@@ -10,16 +10,16 @@ public class TODO {
   private TODO(String... cliArgs) {
 
     new TaskApp().configure {
-      onExecute { task, config, args ->
-        help()
-      }
-      configureCli {
-        setUsage 'T O D O'
-        h longOpt: 'help', 'usage information'
-        t longOpt: 'todo-home', args: 1, argName: 'dir', 'TODO dir'
+
+      configureCliBuilder { cliBuilder ->
+        cliBuilder.with {
+          setUsage 'T O D O'
+          h longOpt: 'help', 'usage information'
+          t longOpt: 'todo-home', args: 1, argName: 'dir', 'TODO dir'
+        }
       }
 
-      handleCli { options, config ->
+      handleOptions { options, config ->
         if(options.h) {
           help()
         }
