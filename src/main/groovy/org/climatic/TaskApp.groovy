@@ -176,10 +176,9 @@ public class TaskApp {
         cliHandler.delegate = this
         cliHandler(options, config)
       }
-      } catch (Help h) {
-        cli.usage()
-          throw h
-      }
+    } catch (Help h) {
+      cli.usage()
+    }
     config[task.qualifiedName].cli = cli
     [options.arguments(), config]
   }
@@ -190,14 +189,12 @@ public class TaskApp {
         it(task, config, argz)
       }
       try {
-      task.runners.each {
-        it.delegate = this
-
-        it(task, config, argz)
-      }
+        task.runners.each {
+          it.delegate = this
+          it(task, config, argz)
+        }
       } catch (Help h) {
-        config[task.qualifiedName].cli.usage
-          throw h
+        config[task.qualifiedName].cli.usage()
       }
     }
   }
