@@ -31,6 +31,7 @@ public class TODO {
       }
 
       task('list') {
+        description 'List all todos in descending priority'
         onExecute { task, config, args ->
           config.todoList.eachWithIndex { item, i ->
             println "${i + 1} ${item.done ? 'X':' '} '$item.item'"
@@ -39,12 +40,14 @@ public class TODO {
       }
 
       task('add') {
+        description 'Add a todo'
         onExecute { task, config, args ->
           config.todoList.add(args.head())
         }
       }
 
-      task('check') {
+      task('complete') {
+        description 'Mark a todo as complete'
         onExecute { task, config, args ->
           def index = Integer.parseInt(args[0])
           config.todoList.done(index - 1)
@@ -52,13 +55,15 @@ public class TODO {
       }
 
       task('remove') {
+        description 'Remove a todo from list'
         onExecute { task, config, args ->
           def index = Integer.parseInt(args[0])
           config.todoList.remove(index - 1)
         }
       }
 
-      task('remove-checked') {
+      task('remove-completed') {
+        description 'Remove all completed todos'
         onExecute { task, config, args ->
           config.todoList.removeChecked()
         }

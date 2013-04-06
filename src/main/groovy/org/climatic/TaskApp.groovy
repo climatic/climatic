@@ -49,6 +49,11 @@ public class TaskApp {
       tasks[':']
     }
 
+    public Task description(String description) {
+      currentTask.description = description
+      currentTask
+    }
+
     public Task dependsOn(String... tasks) {
       currentTask.dependsOn.addAll tasks
       currentTask
@@ -72,12 +77,20 @@ public class TaskApp {
   }
 
   private static class Task {
+
     final name
+
     final qualifiedName
+
     final dependsOn = []
+
     final cliConfig = []
+
     final cliHandle = []
+
     final runners = []
+
+    String description
 
     def subTasks = []
 
@@ -180,6 +193,7 @@ public class TaskApp {
 
   private configTask(task, args, config = new ConfigObject()) {
     def cli = new CliBuilder()
+    cli.setUsage "$task.name [<options>] [<task>]"
     task.cliConfig.each { configCli ->
       configCli(cli)
     }
@@ -197,12 +211,15 @@ public class TaskApp {
   }
 
   private void taskHelp(task, cli) {
-    def header = 'tasks:\n' << ''
-    task.subTasks.each {
-      header << "    $it.name\n"
+    def subTasks = task.subTasks
+    if (subTasks) {
+      def footer = 'tasks:\n' << ''
+      def pad = subTasks*.name.inject(0) { size, name -> name.size() > size ? name.size() : size }
+      subTasks.each {
+        footer << "    ${it.name.padRight(pad)}    $it.description\n"
+      }
+      cli.setFooter footer.toString()
     }
-    header << '\noptions:'
-    cli.setHeader header.toString()
     cli.usage()
     throw new TerminateTaskApp()
   }
