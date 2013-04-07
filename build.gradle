@@ -6,6 +6,8 @@ allprojects {
   sourceCompatibility = 1.6
   targetCompatibility = 1.6
   compileJava.options.fork([memoryMaximumSize: '1024m'])
+
+  group = 'org.climatic'
   
   repositories {
       mavenCentral()
@@ -21,18 +23,17 @@ allprojects {
   }
 }
 
-task createWrapper(type:Wrapper) {
-    gradleVersion = '1.0'
-}
-
-group = 'org.climatic'
-
 dependencies {
     runtime 'commons-cli:commons-cli:1.2'
 }
 
-project(':examples') {
+project(':samples-todo-list') {
   dependencies {
     compile rootProject
   }
 }
+
+task createWrapper(type:Wrapper) {
+    gradleVersion = '1.0'
+}
+

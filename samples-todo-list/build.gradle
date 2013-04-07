@@ -1,0 +1,5 @@
+apply plugin: 'application'
+
+applicationName = 'todo-list'
+
+mainClassName = 'org.climatic.todo.TodoApp'

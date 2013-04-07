@@ -2,11 +2,53 @@ package org.climatic
 
 public class TaskApp {
 
+  private final static char NBSP = '\u00A0'
+
+  private final appName
+
   private final tasks = [:]
 
   private final beforeTasks = []
 
-  PrintWriter writer = new PrintWriter(System.out)
+  private final Closure usageGenerator = { task ->
+    def qName = task.qualifiedName
+      def opts = ' [<options>] '
+    def taskList = qName == ':' ? opts : "$opts${task.qualifiedName.split(':').tail().join(opts)}$opts"
+    "$appName$taskList<task>"
+  }
+
+  PrintWriter writer
+
+  private static class NonBreakingSpaceFilter extends FilterWriter {
+
+    public NonBreakingSpaceFilter(Writer writer) {
+      super(writer)
+    }
+
+    public NonBreakingSpaceFilter(OutputStream os) {
+      super(new OutputStreamWriter(os))
+    }
+
+    public void write(char[] cbuf, int off, int len) {
+      super.write(cbuf.collect {c -> c == TaskApp.NBSP ? ' ' : c} as char[], off, len)
+    }
+    public void write(int c) {
+      super.write(c == TaskApp.NBSP ? ' ' : c)
+
+    }
+    public void write(String str, int off, int len) {
+      super.write(str.replace(TaskApp.NBSP, (char) ' '), off, len)
+    }
+  }
+
+  public void setWriter(Writer writer) {
+    this.writer = new PrintWriter(new NonBreakingSpaceFilter(writer))
+  }
+
+  public TaskApp(String appName) {
+    this.appName = appName
+      this.writer = new PrintWriter(new NonBreakingSpaceFilter(System.out))
+  }
 
   private static class TaskGraphBuilder {
 
@@ -189,8 +231,8 @@ public class TaskApp {
 
   private configTask(task, args, config = new ConfigObject()) {
     def cli = new CliBuilder()
-      cli.writer = writer
-    cli.setUsage "$task.name [<options>] [<task>]"
+    cli.writer = writer
+    cli.setUsage(usageGenerator(task))
     task.cliConfig.each { configCli ->
       configCli(cli)
     }
@@ -213,7 +255,7 @@ public class TaskApp {
       def footer = 'tasks:\n' << ''
       def pad = subTasks*.name.inject(0) { size, name -> name.size() > size ? name.size() : size }
       subTasks.each {
-        footer << "    ${it.name.padRight(pad)}    $it.description\n"
+        footer << "$TaskApp.NBSP${it.name.padRight(pad)}    $it.description\n"
       }
       cli.setFooter footer.toString()
     }
