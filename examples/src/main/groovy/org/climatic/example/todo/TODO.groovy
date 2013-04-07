@@ -24,8 +24,7 @@ public class TODO {
           help()
         }
         if(!options.t) {
-          println 'No TODO dir set'
-          help()
+          help 'No TODO dir set'
         }
         config.todoList = new TodoList(new File(options.t))
       }
@@ -98,7 +97,6 @@ public class TODO {
       withList { list ->
         list << [item: item, done: false]
       }
-
       save()
     }
 

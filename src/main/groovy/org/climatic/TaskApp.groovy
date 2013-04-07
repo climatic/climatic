@@ -6,6 +6,8 @@ public class TaskApp {
 
   private final beforeTasks = []
 
+  PrintWriter writer = new PrintWriter(System.out)
+
   private static class TaskGraphBuilder {
 
     private final tasks
@@ -130,17 +132,6 @@ public class TaskApp {
       }.flatten().unique() + [this]
     }
 
-    def asMap() {
-        def details = [name: name, qn: qualifiedName]
-      if (dependsOn) {
-        details.dependsOn = dependsOn.join(', ')
-      }
-      if (subTasks) {
-        details.subTasks = subTasks*.asMap()
-      }
-      details
-    }
-
   }
 
   public TaskApp configure(Closure... taskConfigurations) {
@@ -157,7 +148,12 @@ public class TaskApp {
 
   private static class TerminateTaskApp extends RuntimeException {}
 
-  public void help() {
+  public void help(String message = '') {
+    if (message) {
+      writer << '\n'
+      writer << message
+      writer << '\n\n'
+    }
     throw new Help()
   }
 
@@ -193,6 +189,7 @@ public class TaskApp {
 
   private configTask(task, args, config = new ConfigObject()) {
     def cli = new CliBuilder()
+      cli.writer = writer
     cli.setUsage "$task.name [<options>] [<task>]"
     task.cliConfig.each { configCli ->
       configCli(cli)
