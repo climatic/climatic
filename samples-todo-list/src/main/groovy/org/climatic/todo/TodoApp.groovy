@@ -128,7 +128,6 @@ public class TodoApp {
       withList { list ->
         list << [item: item, done: false]
       }
-      save()
     }
 
     private void withList(doit) {
