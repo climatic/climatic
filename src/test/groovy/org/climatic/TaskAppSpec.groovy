@@ -4,45 +4,45 @@ import spock.lang.Specification
 
 class TaskAppSpec extends Specification {
 
-  private final writer = new StringWriter()
+    private final writer = new StringWriter()
 
-  private final taskConfiguration = {
-      task('test') {
-        configureCliBuilder { cliBuilder ->
-          cliBuilder.with {
-            e longOpt: 'echo', args: 1, argName: 'message', 'message'
-          }
+    private final taskConfiguration = {
+        task('test') {
+            configureCliBuilder { cliBuilder ->
+                cliBuilder.with {
+                    e longOpt: 'echo', args: 1, argName: 'message', 'message'
+                }
+            }
+            handleOptions { options, config ->
+                if(!options.e) {
+                    help 'No message'
+                }
+                config.message = options.e
+            }
+            onExecute { task, config, args ->
+                writer << config.message
+            }
         }
-        handleOptions { options, config ->
-          if(!options.e) {
-            help 'No message'
-          }
-          config.message = options.e
-        }
-        onExecute { task, config, args ->
-          writer << config.message
-        }
-      }
 
     }
 
-  def 'task executed'() {
-    def app = new TaskApp('app')
-    app.writer = writer
-    app.configure taskConfiguration
-    app.run(['test', '-e', 'testing testing'] as String[])
+    def 'task executed'() {
+        def app = new TaskApp('app')
+        app.writer = writer
+        app.configure taskConfiguration
+        app.run(['test', '-e', 'testing testing'] as String[])
 
-    expect:
+        expect:
         'testing testing' == writer.toString()
-  }
+    }
 
-  def 'task configured incorrectly'() {
-    def app = new TaskApp('app')
-    app.writer = writer
-    app.configure taskConfiguration
-    app.run(['test'] as String[])
+    def 'task configured incorrectly'() {
+        def app = new TaskApp('app')
+        app.writer = writer
+        app.configure taskConfiguration
+        app.run(['test'] as String[])
 
-    expect:
+        expect:
         writer.toString().startsWith('\nNo message')
-  }
+    }
 }
