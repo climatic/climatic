@@ -31,27 +31,33 @@ public class TaskApp {
         this
     }
 
-    public void help(String message = '') {
+    public void help(message = '') {
         if (message) {
-            writer << '\n'
-            writer << message
-            writer << '\n\n'
+            message = '\n' + message + '\n'
         }
-        throw new Help()
+        terminate(message, new Help())
     }
 
-    public void run(String... args) {
+    public void terminate(message = '', throwable = new TerminateTaskApp()) {
+        if (message) {
+            writer << message + '\n'
+        }
+        writer.flush()
+        throw throwable
+    }
+
+    public void run(ConfigObject initialConfig = new ConfigObject(), String... args) {
         try {
-            runUnsafe(args)
+            runUnsafe(initialConfig, args)
         } catch (TerminateTaskApp t) {
             //NOP
         }
     }
 
-    private void runUnsafe(String... args) {
+    private void runUnsafe(ConfigObject initialConfig, String... args) {
         def taskName = ':'
         def task = tasks[taskName]
-        def (argz, config) = configTask(task, args)
+        def (argz, config) = configTask(task, args, initialConfig)
         if (argz) {
             taskName += argz.head()
             def nextTask = tasks[taskName]
@@ -70,7 +76,7 @@ public class TaskApp {
         runTasks(tasks, config, argz)
     }
 
-    private configTask(task, args, config = new ConfigObject()) {
+    private configTask(task, args, config) {
         def cli = new CliBuilder()
         cli.writer = writer
         cli.setUsage(createUsage(task))

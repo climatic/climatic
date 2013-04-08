@@ -8,13 +8,14 @@ import org.climatic.TaskApp
 public class TodoApp {
 
     private TodoApp(String... cliArgs) {
-
+        def initialConfig = new ConfigObject()
+        initialConfig.version = '1.0'
         new TaskApp('todo-list').configure {
 
             configureCliBuilder { cliBuilder ->
                 cliBuilder.with {
-                    //setUsage 'todo-list [<options>] <task>'
                     h longOpt: 'help', 'usage information'
+                    v longOpt: 'version', 'show version'
                     t longOpt: 'todo-home', args: 1, argName: 'dir', 'todo list directory'
                 }
             }
@@ -22,6 +23,9 @@ public class TodoApp {
             handleOptions { options, config ->
                 if(options.h) {
                     help()
+                }
+                if (options.v) {
+                    terminate("version $config.version")
                 }
                 if(!options.t) {
                     help 'No todo list directory provided'
@@ -87,7 +91,7 @@ public class TodoApp {
                     config.todoList.list listPrinter
                 }
             }
-        }.run(cliArgs)
+        }.run(initialConfig, cliArgs)
     }
 
     private static class TodoList {
