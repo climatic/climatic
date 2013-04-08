@@ -10,14 +10,126 @@ public class TaskApp {
 
     private final beforeTasks = []
 
-    private final Closure usageGenerator = { task ->
+    private writer
+
+    public TaskApp(String appName) {
+        this.appName = appName
+        this.writer = new PrintWriter(new NonBreakingSpaceFilter(System.out))
+    }
+
+    public void setWriter(Writer writer) {
+        this.writer = new PrintWriter(new NonBreakingSpaceFilter(writer))
+    }
+
+    public TaskApp configure(Closure... taskConfigurations) {
+        new TaskGraphBuilder(tasks).configure(taskConfigurations)
+        this
+    }
+
+    public TaskApp onTaskBegin(Closure taskBeginAction) {
+        beforeTasks << taskBeginAction
+        this
+    }
+
+    public void help(String message = '') {
+        if (message) {
+            writer << '\n'
+            writer << message
+            writer << '\n\n'
+        }
+        throw new Help()
+    }
+
+    public void run(String... args) {
+        try {
+            runUnsafe(args)
+        } catch (TerminateTaskApp t) {
+            //NOP
+        }
+    }
+
+    private void runUnsafe(String... args) {
+        def taskName = ':'
+        def task = tasks[taskName]
+        def (argz, config) = configTask(task, args)
+        if (argz) {
+            taskName += argz.head()
+            def nextTask = tasks[taskName]
+            while (nextTask) {
+                task = nextTask
+                (argz, config) = configTask(task, argz.tail(), config)
+                if (argz) {
+                    taskName += ':' + argz.head()
+                    nextTask = tasks[taskName]
+                } else {
+                    nextTask = null
+                }
+            }
+        }
+        def tasks = task.getDependencies(tasks)
+        runTasks(tasks, config, argz)
+    }
+
+    private configTask(task, args, config = new ConfigObject()) {
+        def cli = new CliBuilder()
+        cli.writer = writer
+        cli.setUsage(createUsage(task))
+        task.cliConfig.each { configCli ->
+            configCli(cli)
+        }
+        def options = cli.parse(args)
+        try {
+            task.cliHandle.each { cliHandler ->
+                cliHandler.delegate = this
+                cliHandler(options, config)
+            }
+        } catch (Help h) {
+            taskHelp(task, cli)
+        }
+        config[task.qualifiedName].cli = cli
+        [options.arguments(), config]
+    }
+
+    private createUsage(task) {
         def qName = task.qualifiedName
         def opts = ' [<options>] '
         def taskList = qName == ':' ? opts : "$opts${task.qualifiedName.split(':').tail().join(opts)}$opts"
         "$appName$taskList<task>"
     }
 
-    PrintWriter writer
+    private void taskHelp(task, cli) {
+        def subTasks = task.subTasks
+        if (subTasks) {
+            def footer = 'tasks:\n' << ''
+            def pad = subTasks*.name.inject(0) { size, name -> name.size() > size ? name.size() : size }
+            subTasks.each {
+                footer << "$TaskApp.NBSP${it.name.padRight(pad)}    $it.description\n"
+            }
+            cli.setFooter footer.toString()
+        }
+        cli.usage()
+        throw new TerminateTaskApp()
+    }
+
+    private void runTasks(tasks, config, argz) {
+        tasks.each { task ->
+            beforeTasks.each {
+                it(task, config, argz)
+            }
+            try {
+                def taskRunners = task.runners
+                if(!taskRunners) {
+                    help()
+                }
+                taskRunners.each {
+                    it.delegate = this
+                    it(task, config, argz)
+                }
+            } catch (Help h) {
+                taskHelp(task, config[task.qualifiedName].cli)
+            }
+        }
+    }
 
     private static class NonBreakingSpaceFilter extends FilterWriter {
 
@@ -39,15 +151,6 @@ public class TaskApp {
         public void write(String str, int off, int len) {
             super.write(str.replace(TaskApp.NBSP, (char) ' '), off, len)
         }
-    }
-
-    public void setWriter(Writer writer) {
-        this.writer = new PrintWriter(new NonBreakingSpaceFilter(writer))
-    }
-
-    public TaskApp(String appName) {
-        this.appName = appName
-        this.writer = new PrintWriter(new NonBreakingSpaceFilter(System.out))
     }
 
     private static class TaskGraphBuilder {
@@ -176,111 +279,8 @@ public class TaskApp {
 
     }
 
-    public TaskApp configure(Closure... taskConfigurations) {
-        new TaskGraphBuilder(tasks).configure(taskConfigurations)
-        this
-    }
-
-    public TaskApp onTaskBegin(Closure taskBeginAction) {
-        beforeTasks << taskBeginAction
-        this
-    }
-
     private static class Help extends RuntimeException {}
 
     private static class TerminateTaskApp extends RuntimeException {}
-
-    public void help(String message = '') {
-        if (message) {
-            writer << '\n'
-            writer << message
-            writer << '\n\n'
-        }
-        throw new Help()
-    }
-
-    public void run(String... args) {
-        try {
-            runUnsafe(args)
-        } catch (TerminateTaskApp t) {
-            //NOP
-        }
-    }
-
-    private void runUnsafe(String... args) {
-        def taskName = ':'
-        def task = tasks[taskName]
-        def (argz, config) = configTask(task, args)
-        if (argz) {
-            taskName += argz.head()
-            def nextTask = tasks[taskName]
-            while (nextTask) {
-                task = nextTask
-                (argz, config) = configTask(task, argz.tail(), config)
-                if (argz) {
-                    taskName += ':' + argz.head()
-                    nextTask = tasks[taskName]
-                } else {
-                    nextTask = null
-                }
-            }
-        }
-        def tasks = task.getDependencies(tasks)
-        runTasks(tasks, config, argz)
-    }
-
-    private configTask(task, args, config = new ConfigObject()) {
-        def cli = new CliBuilder()
-        cli.writer = writer
-        cli.setUsage(usageGenerator(task))
-        task.cliConfig.each { configCli ->
-            configCli(cli)
-        }
-        def options = cli.parse(args)
-        try {
-            task.cliHandle.each { cliHandler ->
-                cliHandler.delegate = this
-                cliHandler(options, config)
-            }
-        } catch (Help h) {
-            taskHelp(task, cli)
-        }
-        config[task.qualifiedName].cli = cli
-        [options.arguments(), config]
-    }
-
-    private void taskHelp(task, cli) {
-        def subTasks = task.subTasks
-        if (subTasks) {
-            def footer = 'tasks:\n' << ''
-            def pad = subTasks*.name.inject(0) { size, name -> name.size() > size ? name.size() : size }
-            subTasks.each {
-                footer << "$TaskApp.NBSP${it.name.padRight(pad)}    $it.description\n"
-            }
-            cli.setFooter footer.toString()
-        }
-        cli.usage()
-        throw new TerminateTaskApp()
-    }
-
-    private void runTasks(tasks, config, argz) {
-        tasks.each { task ->
-            beforeTasks.each {
-                it(task, config, argz)
-            }
-            try {
-                def taskRunners = task.runners
-                if(!taskRunners) {
-                    help()
-                }
-                taskRunners.each {
-                    it.delegate = this
-                    it(task, config, argz)
-                }
-            } catch (Help h) {
-                taskHelp(task, config[task.qualifiedName].cli)
-            }
-        }
-    }
 
 }
