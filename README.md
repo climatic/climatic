@@ -13,26 +13,22 @@ Put the following *Groovy* code in the file _tasks.groovy_:
     new TaskApp('tasks').configure {
         configureCliBuilder { cliBuilder ->
             cliBuilder.with {
-                h longOpt: 'help', 'usage information'
+                v longOpt: 'version', 'show version'
             }
         }
         handleOptions { options, config ->
-            if (options.h) {
-                help('Please select a task')
+            if (options.v) {
+                terminate('Version 1.0')
             }
         }
         task('print') {
             description 'print a message'
                 configureCliBuilder { cliBuilder ->
                     cliBuilder.with {
-                        h longOpt: 'help', 'usage information'
                         m longOpt: 'message', args:1, argName: 'message', 'a message to print'
                     }
                 }
             handleOptions { options, config ->
-                if(options.h) {
-                    help()
-                }
                 if (!options.m) {
                     help 'Please provide a message'
                 }

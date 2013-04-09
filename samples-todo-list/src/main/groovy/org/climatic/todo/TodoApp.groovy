@@ -14,16 +14,12 @@ public class TodoApp {
 
             configureCliBuilder { cliBuilder ->
                 cliBuilder.with {
-                    h longOpt: 'help', 'usage information'
                     v longOpt: 'version', 'show version'
                     t longOpt: 'todo-home', args: 1, argName: 'dir', 'todo list directory'
                 }
             }
 
             handleOptions { options, config ->
-                if(options.h) {
-                    help()
-                }
                 if (options.v) {
                     terminate("version $config.version")
                 }
@@ -41,15 +37,11 @@ public class TodoApp {
                 description 'List all todos in descending priority'
                 configureCliBuilder { cliBuilder ->
                     cliBuilder.with {
-                        h longOpt: 'help', 'usage information'
                         c longOpt: 'completed', 'list completed todos'
                         p longOpt: 'pending', 'list pending todos'
                     }
                 }
                 handleOptions { options, config ->
-                    if(options.h) {
-                        help()
-                    }
                     config.list.ignoreComplete = options.c ? true : false
                     config.list.ignorePending = options.p ? true : false
                 }

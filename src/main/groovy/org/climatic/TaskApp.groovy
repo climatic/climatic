@@ -80,11 +80,18 @@ public class TaskApp {
         def cli = new CliBuilder()
         cli.writer = writer
         cli.setUsage(createUsage(task))
+        // TODO make help optional/configurable
+        cli.with {
+            h longOpt: 'help', 'usage information'
+        }
         task.cliConfig.each { configCli ->
             configCli(cli)
         }
         def options = cli.parse(args)
         try {
+            if(options.h) {
+                help()
+            }
             task.cliHandle.each { cliHandler ->
                 cliHandler.delegate = this
                 cliHandler(options, config)
