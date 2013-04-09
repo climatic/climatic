@@ -190,7 +190,7 @@ public class TaskApp {
         private resolveTaskFromName(name) {
             def task
             if (currentTask) {
-                task = currentTask.createTask(name)
+                task = currentTask.subTask(name)
             } else {
                 task = getRootTask() ?: Task.createRootTask()
             }
@@ -256,9 +256,12 @@ public class TaskApp {
             new Task(':', ':')
         }
 
-        Task createTask(name) {
-            def task = new Task(name, fullyQualify(name))
-            subTasks << task
+        Task subTask(name) {
+            def task = subTasks.find { it.name == name }
+            if (!task) {
+                task = new Task(name, fullyQualify(name))
+                subTasks << task
+            }
             task
         }
 
