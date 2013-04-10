@@ -57,6 +57,12 @@ public class TaskApp {
     private void runUnsafe(ConfigObject initialConfig, String... args) {
         def taskName = ':'
         def task = tasks[taskName]
+        //TODO use a category instead?
+        initialConfig.metaClass {
+            extend { config ->
+                delegate.merge(config.merge(delegate))
+            }
+        }
         def (argz, config) = configTask(task, args, initialConfig)
         if (argz) {
             taskName += argz.head()

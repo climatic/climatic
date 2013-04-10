@@ -50,7 +50,6 @@ public class TodoApp {
                 }
             }
 
-
             task('add') {
                 description 'Add a todo'
                 onExecute { task, config, args ->
