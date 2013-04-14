@@ -1,4 +1,4 @@
-climatic
+climatic ![Travis CI status](https://api.travis-ci.org/climatic/climatic.png)
 ========
 
 A simple Groovy framework for creating task based CLIs
