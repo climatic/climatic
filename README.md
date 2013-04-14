@@ -23,11 +23,11 @@ Put the following *Groovy* code in the file _tasks.groovy_:
         }
         task('print') {
             description 'print a message'
-                configureCliBuilder { cliBuilder ->
-                    cliBuilder.with {
-                        m longOpt: 'message', args:1, argName: 'message', 'a message to print'
-                    }
+            configureCliBuilder { cliBuilder ->
+                cliBuilder.with {
+                    m longOpt: 'message', args:1, argName: 'message', 'a message to print'
                 }
+            }
             handleOptions { options, config ->
                 if (!options.m) {
                     help 'Please provide a message'
