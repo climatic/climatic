@@ -1,4 +1,4 @@
-defaultTasks 'clean', 'test', 'assemble'
+defaultTasks 'clean', 'test', 'assemble', 'createReadme'
 
 allprojects {
   apply plugin: 'groovy'
