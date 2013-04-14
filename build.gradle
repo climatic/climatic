@@ -36,3 +36,9 @@ project(':samples-todo-list') {
 task createWrapper(type:Wrapper) {
     gradleVersion = '1.5'
 }
+
+task createReadme << {
+    new org.climatic.gradle.readme.Readme().generate([jar.archivePath] + configurations.runtime.files)
+}
+
+createReadme.dependsOn 'assemble'

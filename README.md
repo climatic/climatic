@@ -54,10 +54,12 @@ Running the script with climatic on the classpath
 yields
 
     usage: tasks [<options>] <task>
-     -h,--help   usage information
+     -h,--help      usage information
+     -v,--version   show version
     tasks:
      print    print a message
-     time     print the time
+     time     show the time
+
 
 and
 
@@ -66,6 +68,8 @@ and
 yields
 
     Hello climatic
+
+
 
 Building
 --------
