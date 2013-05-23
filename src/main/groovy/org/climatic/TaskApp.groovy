@@ -111,6 +111,9 @@ public class TaskApp {
         }
         def options = cli.parse(args)
         try {
+            if (!options) {
+                throw new TerminateTaskApp()
+            }
             if(options.h) {
                 help()
             }
